@@ -1,0 +1,4 @@
+; $Id$
+name = OpenAustralia
+description = Shows you recent speeches by your MP from OpenAustralia.org.
+core = 7.x
