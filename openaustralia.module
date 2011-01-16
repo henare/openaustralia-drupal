@@ -26,37 +26,74 @@ function openaustralia_block_info() {
   return $blocks;
 }
 
+function openaustralia_block_configure($delta = '') {
+  $form = array();
+  if ($delta == 'recent_speeches') {
+    // Load the list of MPs
+    $xml = simplexml_load_file('http://www.openaustralia.org/api/getRepresentatives?key=EM8hqpERATyUCL4DvWFZbNjA&output=xml');
+
+    // Reorganise MPs into an array for sorting on name
+    $MPs = array();
+    foreach ($xml->match as $MP){
+        $MPid = (string) $MP->person_id;
+        $MPname = (string) $MP->name;
+        $MPs[$MPid] = $MPname;
+    }
+    asort($MPs); // actually sort it.
+
+    $form['recent_speeches_mp'] = array(
+      '#type' => 'select',
+      '#title' => t('Choose your MP'),
+      '#description' => t('Choose an MP to display recent speeches from'),
+      '#default_value' => variable_get('recent_speeches_mp'),
+      '#options' => $MPs
+    );
+  }
+  return $form;
+}
+
+function openaustralia_block_save($delta = '', $edit = array()) {
+  if ($delta == 'recent_speeches') {
+    variable_set('recent_speeches_mp', $edit['recent_speeches_mp']);
+  }
+  return;
+}
+
 function openaustralia_block_view($delta = '') {
   switch ($delta) {
     case 'recent_speeches':
       $block['subject'] = t('My MPs recent speeches');
 
-      $xml = simplexml_load_file("http://www.openaustralia.org/api/getHansard?key=FMzR8pDUrEebHCuLT4AKJYC6&output=xml&person=10513");
+      if(variable_get('recent_speeches_mp')){
+        $xml = simplexml_load_file("http://www.openaustralia.org/api/getHansard?key=FMzR8pDUrEebHCuLT4AKJYC6&output=xml&person=" . variable_get('recent_speeches_mp'));
 
-      // Get some information about the MP
-      $MPname = (string) $xml->rows->match->speaker->first_name . ' ' . $xml->rows->match->speaker->last_name;
-      $MPconstituency = (string) $xml->rows->match->speaker->constituency;
-      $MPurl = (string) $xml->rows->match->speaker->url;
+        // Get some information about the MP
+        $MPname = (string) $xml->rows->match->speaker->first_name . ' ' . $xml->rows->match->speaker->last_name;
+        $MPconstituency = (string) $xml->rows->match->speaker->constituency;
+        $MPurl = (string) $xml->rows->match->speaker->url;
 
-      // Display the MP name and constituency
-      $block_content = '<a href="http://www.openaustralia.org'.$MPurl.'">'.$MPname.', MP - Member for '.$MPconstituency.'</a>';
+        // Display the MP name and constituency
+        $block_content = '<a href="http://www.openaustralia.org' . $MPurl . '">' . $MPname . ', MP - Member for ' . $MPconstituency . '</a>';
 
-      $block_content .= '<ul>';
-      $i = 0; //counter for number of meetings
-      foreach ($xml->rows->match as $match){
-          if ($i >= 5) { break; } // don't list more than 5 meetings
-          $date = strtotime($match->hdate);
-          $block_content .=  '<li><b>';
-          $block_content .=  date('j M', $date) . ': ';
-          $block_content .= '<a href="http://www.openaustralia.org' . $match->listurl . '">' . $match->parent->body . '</a></b>';
-          $block_content .= '<br/>' . $match->body;
-          $block_content .= '</li>'."\n";
-          $i++; //increment the counter
+        $block_content .= '<ul>';
+        $i = 0; //counter for number of meetings
+        foreach ($xml->rows->match as $match){
+            if ($i >= 5) { break; } // don't list more than 5 meetings
+            $date = strtotime($match->hdate);
+            $block_content .=  '<li><b>';
+            $block_content .=  date('j M', $date) . ': ';
+            $block_content .= '<a href="http://www.openaustralia.org' . $match->listurl . '">' . $match->parent->body . '</a></b>';
+            $block_content .= '<br/>' . $match->body;
+            $block_content .= '</li>' . "\n";
+            $i++; //increment the counter
+        }
+        $block_content .= '</ul>';
+        $block_content .= '<p>More from <a href="http://www.openaustralia.org' . $MPurl . '">OpenAustralia.org</a></p>';
+
+        $block['content'] = $block_content;
+      }else{
+        $block['content'] = t('Sorry, no MP is configured yet. Please visit the configuration page for this block to set one');
       }
-      $block_content .= '</ul>';
-      $block_content .= '<p>More from <a href="http://www.openaustralia.org' . $MPurl . '">OpenAustralia.org</a></p>';
-
-      $block['content'] = $block_content;
       break;
   }
   return $block;
