@@ -44,9 +44,17 @@ function openaustralia_block_configure($delta = '') {
     $form['recent_speeches_mp'] = array(
       '#type' => 'select',
       '#title' => t('Choose your MP'),
-      '#description' => t('Choose an MP to display recent speeches from'),
+      '#description' => t('Choose an MP to display recent speeches from.'),
       '#default_value' => variable_get('recent_speeches_mp'),
       '#options' => $MPs
+    );
+
+    $form['recent_speeches_count'] = array(
+      '#type' => 'select',
+      '#title' => t('Maximum number of speeches displayed'),
+      '#description' => t('Select how many speeches should be displayed.'),
+      '#default_value' => variable_get('recent_speeches_count', 5),
+      '#options' => drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)),
     );
   }
   return $form;
@@ -55,6 +63,7 @@ function openaustralia_block_configure($delta = '') {
 function openaustralia_block_save($delta = '', $edit = array()) {
   if ($delta == 'recent_speeches') {
     variable_set('recent_speeches_mp', $edit['recent_speeches_mp']);
+    variable_set('recent_speeches_count', $edit['recent_speeches_count']);
   }
   return;
 }
@@ -76,16 +85,16 @@ function openaustralia_block_view($delta = '') {
         $block_content = '<a href="http://www.openaustralia.org' . $MPurl . '">' . $MPname . ', MP - Member for ' . $MPconstituency . '</a>';
 
         $block_content .= '<ul>';
-        $i = 0; //counter for number of meetings
+        $i = 0;
         foreach ($xml->rows->match as $match){
-            if ($i >= 5) { break; } // don't list more than 5 meetings
+            if ($i >= variable_get('recent_speeches_count', 5)) { break; }
             $date = strtotime($match->hdate);
             $block_content .=  '<li><b>';
             $block_content .=  date('j M', $date) . ': ';
             $block_content .= '<a href="http://www.openaustralia.org' . $match->listurl . '">' . $match->parent->body . '</a></b>';
             $block_content .= '<br/>' . $match->body;
             $block_content .= '</li>' . "\n";
-            $i++; //increment the counter
+            $i++;
         }
         $block_content .= '</ul>';
         $block_content .= '<p>More from <a href="http://www.openaustralia.org' . $MPurl . '">OpenAustralia.org</a></p>';
