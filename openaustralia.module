@@ -10,3 +10,11 @@ function openaustralia_help($path, $arg) {
   }
   return $output;
 }
+
+function openaustralia_permission() {
+  return array(
+    'view OpenAustralia speeches' => array(
+      'title' => t('View OpenAustralia speeches')
+    )
+  );
+}
