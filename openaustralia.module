@@ -71,6 +71,11 @@ function openaustralia_block_save($delta = '', $edit = array()) {
 function openaustralia_block_view($delta = '') {
   switch ($delta) {
     case 'recent_speeches':
+      if(!user_access('view OpenAustralia speeches')){
+        $block = '';
+        break;
+      }
+
       $block['subject'] = t('My MPs recent speeches');
 
       if(variable_get('recent_speeches_mp')){
