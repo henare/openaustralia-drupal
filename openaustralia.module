@@ -1,2 +1,12 @@
 <?php
 // $Id$
+
+function openaustralia_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case "admin/help#openaustralia":
+      $output = '<p>'. t("Shows you recent speeches by your MP from OpenAustralia.org.") .'</p>';
+      break;
+  }
+  return $output;
+}
